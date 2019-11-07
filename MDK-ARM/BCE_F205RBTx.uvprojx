@@ -18,12 +18,12 @@
           <Vendor>STMicroelectronics</Vendor>
           <PackID>Keil.STM32F2xx_DFP.2.9.0</PackID>
           <PackURL>http://www.keil.com/pack</PackURL>
-          <Cpu>IRAM(0x20000000-0x2000FFFF) IROM(0x8000000-0x801FFFF) CLOCK(25000000) CPUTYPE("Cortex-M3")</Cpu>
+          <Cpu>IRAM(0x20000000,0x00010000) IROM(0x08000000,0x00020000) CPUTYPE("Cortex-M3") CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
-          <FlashDriverDll></FlashDriverDll>
-          <DeviceId></DeviceId>
-          <RegisterFile></RegisterFile>
+          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32F2xx_1024 -FS08000000 -FL020000 -FP0($$Device:STM32F205RBTx$CMSIS\Flash\STM32F2xx_1024.FLM))</FlashDriverDll>
+          <DeviceId>0</DeviceId>
+          <RegisterFile>$$Device:STM32F205RBTx$Drivers\CMSIS\Device\ST\STM32F2xx\Include\stm32f2xx.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
           <Asm></Asm>
@@ -54,7 +54,7 @@
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
           <DebugInformation>1</DebugInformation>
-          <BrowseInformation>1</BrowseInformation>
+          <BrowseInformation>0</BrowseInformation>
           <ListingPath></ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
@@ -110,11 +110,11 @@
         </CommonProperty>
         <DllOption>
           <SimDllName>SARMCM3.DLL</SimDllName>
-          <SimDllArguments>-MPU -REMAP</SimDllArguments>
+          <SimDllArguments> -REMAP -MPU</SimDllArguments>
           <SimDlgDll>DCM.DLL</SimDlgDll>
           <SimDlgDllArguments>-pCM3</SimDlgDllArguments>
           <TargetDllName>SARMCM3.DLL</TargetDllName>
-          <TargetDllArguments>-MPU</TargetDllArguments>
+          <TargetDllArguments> -MPU</TargetDllArguments>
           <TargetDlgDll>TCM.DLL</TargetDlgDll>
           <TargetDlgDllArguments>-pCM3</TargetDlgDllArguments>
         </DllOption>
@@ -138,7 +138,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>STLink\ST-LINKIII-KEIL_SWO.dll</Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -312,8 +312,8 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>2</Optim>
-            <oTime>1</oTime>
+            <Optim>1</Optim>
+            <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
             <Strict>0</Strict>
@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F205xx,USE_HAL_DRIVER,STM32F205xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;C:/Users/ItGavrilov/STM32Cube/Repository/STM32Cube_FW_F2_V1.8.0/Drivers/STM32F2xx_HAL_Driver/Inc;C:/Users/ItGavrilov/STM32Cube/Repository/STM32Cube_FW_F2_V1.8.0/Drivers/STM32F2xx_HAL_Driver/Inc/Legacy;C:/Users/ItGavrilov/STM32Cube/Repository/STM32Cube_FW_F2_V1.8.0/Middlewares/ST/STM32_USB_Device_Library/Core/Inc;C:/Users/ItGavrilov/STM32Cube/Repository/STM32Cube_FW_F2_V1.8.0/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;C:/Users/ItGavrilov/STM32Cube/Repository/STM32Cube_FW_F2_V1.8.0/Drivers/CMSIS/Device/ST/STM32F2xx/Include;C:/Users/ItGavrilov/STM32Cube/Repository/STM32Cube_FW_F2_V1.8.0/Drivers/CMSIS/Include</IncludePath>
+              <IncludePath>../Inc; C:/Users/ItGavrilov/STM32Cube/Repository/STM32Cube_FW_F2_V1.8.0/Drivers/STM32F2xx_HAL_Driver/Inc; C:/Users/ItGavrilov/STM32Cube/Repository/STM32Cube_FW_F2_V1.8.0/Drivers/STM32F2xx_HAL_Driver/Inc/Legacy; C:/Users/ItGavrilov/STM32Cube/Repository/STM32Cube_FW_F2_V1.8.0/Middlewares/ST/STM32_USB_Device_Library/Core/Inc; C:/Users/ItGavrilov/STM32Cube/Repository/STM32Cube_FW_F2_V1.8.0/Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc; C:/Users/ItGavrilov/STM32Cube/Repository/STM32Cube_FW_F2_V1.8.0/Drivers/CMSIS/Device/ST/STM32F2xx/Include; C:/Users/ItGavrilov/STM32Cube/Repository/STM32Cube_FW_F2_V1.8.0/Drivers/CMSIS/Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -528,6 +528,11 @@
           <GroupName>Application/User</GroupName>
           <Files>
             <File>
+              <FileName>biointerfaceControllerLib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Src\biointerfaceControllerLib.c</FilePath>
+            </File>
+            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Src/main.c</FilePath>
@@ -581,11 +586,6 @@
               <FileName>stm32f2xx_hal_msp.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Src/stm32f2xx_hal_msp.c</FilePath>
-            </File>
-            <File>
-              <FileName>biointerfaceControllerLib.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Src\biointerfaceControllerLib.c</FilePath>
             </File>
           </Files>
         </Group>

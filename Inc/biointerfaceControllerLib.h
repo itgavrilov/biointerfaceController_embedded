@@ -21,16 +21,17 @@ extern "C" {
 
 #define COUNT_EMG_CHENNAL 5
 #define COUNT_SERVO_CHENNAL 4
-
+typedef struct{
+	uint16_t position;
+	uint16_t amperage;
+}servo_t;
 typedef struct{
 	unsigned connected:1;
 	unsigned receive:1;
 	unsigned receiveDataRedy:1;
-	uint8_t countChennal;
-	uint16_t positionServo[COUNT_SERVO_CHENNAL];
 	uint16_t valuesEMG[COUNT_EMG_CHENNAL];
-	uint16_t currentPositionServo[COUNT_SERVO_CHENNAL];
-	uint16_t currentAmperageServo[COUNT_SERVO_CHENNAL];
+	servo_t valuesServo[COUNT_SERVO_CHENNAL];
+	uint16_t positionServo[COUNT_SERVO_CHENNAL];
 }status_t;
 
 //uint32_t crc_f(uint32_t*, uint32_t);

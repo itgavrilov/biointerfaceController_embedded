@@ -21,17 +21,18 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 extern ADC_HandleTypeDef hadc1, hadc2;
 extern TIM_HandleTypeDef htim2, htim3, htim8;
 
-#define MESSAGE_SIZE 22
-
 #pragma pack (push, 1)
 #pragma anon_unions
 typedef union {
 	struct {
-		uint8_t start[2];
-		uint32_t ch[COUNT_EMG_CHENNAL];
+		uint16_t start;
+		uint8_t lenOfPack;
+		uint8_t typeOfPack;
+		union {
+			uint32_t ch[COUNT_EMG_CHENNAL];
+			servo_t sevo[COUNT_SERVO_CHENNAL];
+		};
 	};
-	//uint8_t data[(COUNT_EMG_CHENNAL*4)+2];
-	uint8_t data[MESSAGE_SIZE];
 } ms_t;
 #pragma pack (pop)
 
@@ -46,16 +47,14 @@ void initController(void){
 	getValuesServo = malloc(COUNT_SERVO_CHENNAL*2*sizeof(uint16_t));
 	
 	memset(&controllerStatus, 0, sizeof(status_t));
-	memset(getValuesEMG, 0, COUNT_EMG_CHENNAL*sizeof(uint16_t));
-	memset(getValuesServo, 0, COUNT_SERVO_CHENNAL*2*sizeof(uint16_t));
-	
-	controllerStatus.countChennal = COUNT_EMG_CHENNAL;
+	memset(getValuesEMG, 0, COUNT_EMG_CHENNAL * 2);
+	memset(getValuesServo, 0, COUNT_SERVO_CHENNAL * 4);
 	
 	HAL_ADC_Start_DMA(&hadc1,	(uint32_t *)getValuesEMG, COUNT_EMG_CHENNAL);
-	//HAL_ADC_Start_DMA(&hadc2,	(uint32_t *)getValuesServo, COUNT_SERVO_CHENNAL*2);
+	HAL_ADC_Start_DMA(&hadc2,	(uint32_t *)getValuesServo, COUNT_SERVO_CHENNAL*2);
 	
 	HAL_TIM_Base_Start(&htim2);
-	//HAL_TIM_Base_Start(&htim8);
+	HAL_TIM_Base_Start(&htim8);
 	HAL_TIM_Base_Start(&htim3);
 }
 //--------------------------------------------------------------------------------------------------
@@ -76,17 +75,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 void genTestSignal(uint32_t *ch, uint8_t count){
 	static uint8_t point=0;
 
-
-	for(uint8_t i=0;i<count;i++){
+	for(uint8_t i=0;i<count-1;i++){
 		uint16_t tmp = 2047 + (testSignalTable[i][point]<<4);
-		((uint8_t*)&ch[i])[0] = 
-		((uint8_t*)&ch[i])[1] = 0;
-		((uint8_t*)&ch[i])[2] = tmp >> 8;
-		((uint8_t*)&ch[i])[3] = tmp;
+		ch[i] = tmp;
 	}
-
-	((uint8_t*)&ch[count-1])[2] = point >> 5;
-	((uint8_t*)&ch[count-1])[3] = point << 3;
+	ch[count-1] = (point << 4)^0xFFF;
 	
 	point++;
 } 
@@ -94,40 +87,59 @@ void genTestSignal(uint32_t *ch, uint8_t count){
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
-	
 	if(hadc->Instance == ADC1){
-		uint8_t stateUSB = USBD_OK;
+		memcpy(controllerStatus.valuesEMG, getValuesEMG, COUNT_EMG_CHENNAL);
 		
 		if(controllerStatus.receive){
 			HAL_GPIO_WritePin(LED_2_GPIO_Port,LED_2_Pin, GPIO_PIN_SET);
-			
-			memcpy(controllerStatus.valuesEMG, getValuesEMG, COUNT_EMG_CHENNAL);
-			message.start[0] = message.start[1] = 0xFF;
+			message.start = 0xFFFF;
+			message.lenOfPack = COUNT_EMG_CHENNAL * sizeof(uint32_t) + 1;
+			message.typeOfPack = 1;
 
-		if(testProtocol){
-			genTestSignal(message.ch, controllerStatus.countChennal);
-		}else{
-
-			for(uint8_t i=0; i < controllerStatus.countChennal; i++){
-				((uint8_t*)&message.ch[i])[0] = 
-				((uint8_t*)&message.ch[i])[1] = 0;
-				((uint8_t*)&message.ch[i])[2] = controllerStatus.valuesEMG[i] >> 8;
-				((uint8_t*)&message.ch[i])[3] = controllerStatus.valuesEMG[i];
-			}
-
-		}
-			//do{
-				stateUSB = CDC_Transmit_FS(message.data, MESSAGE_SIZE);
-				if(stateUSB == USBD_FAIL){
-					controllerStatus.receive = 0;
-					return;
+			if(testProtocol){
+				genTestSignal(message.ch, COUNT_EMG_CHENNAL);
+			}else{
+				for(uint8_t i=0; i < COUNT_EMG_CHENNAL; i++){
+					message.ch[i] = controllerStatus.valuesEMG[i];
 				}
-			//}while(stateUSB != USBD_OK);
-				
+			}
+			
+			if(CDC_Transmit_FS((void*)&message, 3 + message.lenOfPack) == USBD_FAIL){
+				controllerStatus.receive = 0;
+				return;
+			}
+			
 			HAL_GPIO_WritePin(LED_2_GPIO_Port,LED_2_Pin, GPIO_PIN_RESET);
 		}
 	} else if(hadc->Instance == ADC2){
-		
+		for(uint8_t i=0; i<COUNT_SERVO_CHENNAL; i++){
+			controllerStatus.valuesServo[i].position = (controllerStatus.valuesServo[i].position + ((servo_t*)getValuesServo)[i].position) >> 1;
+			controllerStatus.valuesServo[i].amperage = (controllerStatus.valuesServo[i].amperage + ((servo_t*)getValuesServo)[i].amperage) >> 1;
+		}
+			
+		if(controllerStatus.receive){
+			static uint8_t counItrations = 0;
+			if(counItrations == 7){
+				HAL_GPIO_WritePin(LED_2_GPIO_Port,LED_2_Pin, GPIO_PIN_SET);
+				counItrations = 0;
+				message.start = 0xFFFF;
+				message.lenOfPack = COUNT_SERVO_CHENNAL * sizeof(servo_t) + 1;
+				message.typeOfPack = 2;
+				
+				if(testProtocol){
+					memcpy(message.sevo, controllerStatus.valuesServo, COUNT_SERVO_CHENNAL*4);
+					message.sevo[0].amperage = 500;
+				}else{
+					memcpy(message.sevo, controllerStatus.valuesServo, COUNT_SERVO_CHENNAL*4);
+				}
+				
+				if(CDC_Transmit_FS((void*)&message, 3 + message.lenOfPack) == USBD_FAIL){
+					controllerStatus.receive = 0;
+					return;
+				}
+				HAL_GPIO_WritePin(LED_2_GPIO_Port,LED_2_Pin, GPIO_PIN_RESET);
+			} else counItrations++;
+		}	
 	}
 }
 //--------------------------------------------------------------------------------------------------
