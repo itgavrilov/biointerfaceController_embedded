@@ -32,7 +32,7 @@ void sendDataFromChannels(){
 		if(CDC_Transmit_FS((void*)&message, 4 + message.length) == USBD_FAIL){
 			controllerStatus.serialPort.sendChannelData = 0;
 		}
-	} else HAL_GPIO_WritePin(LED_2_GPIO_Port, LED_2_Pin, GPIO_PIN_RESET);
+	}
 }
 //###############################################################################################################################
 //###############################################################################################################################
