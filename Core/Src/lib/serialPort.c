@@ -15,7 +15,7 @@
 extern USBD_HandleTypeDef hUsbDeviceFS;
 extern ConfigPacket_t config;
 extern status_t controllerStatus;
-
+Message_t message = {0xFFFF, 0, 0, {0}};;
 //###############################################################################################################################
 //###############################################################################################################################
 //###############################################################################################################################
@@ -23,15 +23,14 @@ extern status_t controllerStatus;
 * @brief  Sending channel data packets.
 * @retval Result of the operation: void
 */
-void sendDataFromChannels(){
-	if(controllerStatus.serialPort.sendChannelData){
-		Message_t message = {0xFFFF, 2, sizeof(ChennalPacket_t), {0}};
-		
-		memcpy(&message.data.chennals.ch, &controllerStatus.chennals.ch, message.length);
-		
-		if(CDC_Transmit_FS((void*)&message, 4 + message.length) == USBD_FAIL){
-			controllerStatus.serialPort.sendChannelData = 0;
-		}
+void sendDataFromChannels(ChennalPacket_t *ch){
+	message.packageType = PACKAGE_TYPE_DATA;
+	message.length = sizeof(ChennalPacket_t);
+	
+	memcpy(&message.data.chennals.ch, ch, message.length);
+	
+	if(CDC_Transmit_FS((void*)&message, 4 + message.length) == USBD_FAIL){
+		controllerStatus.serialPort.sendChannelData = 0;
 	}
 }
 //###############################################################################################################################
@@ -40,8 +39,6 @@ void sendDataFromChannels(){
 void parsingConfigMessage(ConfigPacket_t *msg){
 	if(msg->serialNumber) 
 		config.serialNumber = msg->serialNumber;
-	if(msg->enableChannels)
-		config.enableChannels = msg->enableChannels;
 }
 //###############################################################################################################################
 //###############################################################################################################################
@@ -49,7 +46,8 @@ void parsingConfigMessage(ConfigPacket_t *msg){
 void parsingCommandMessage(ControlPacket_t *msg){
 	switch(msg->command){
 		case 0:{
-			Message_t message = {0xFFFF, 0, sizeof(ConfigPacket_t), {0}};
+			message.packageType = PACKAGE_TYPE_CONFIG;
+			message.length = sizeof(ConfigPacket_t);
 			memcpy(&message.data.config, &config, message.length);
 				
 			if(CDC_Transmit_FS((void*)&message, 4 + message.length) == USBD_FAIL){

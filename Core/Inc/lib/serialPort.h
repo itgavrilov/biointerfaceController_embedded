@@ -23,16 +23,30 @@
 typedef struct{
 	unsigned serialNumber:16;
 	unsigned numberOfChannels:8;
-	unsigned enableChannels:8;
 } ConfigPacket_t;
 
 typedef struct {
 	unsigned command:8;
 } ControlPacket_t;
+typedef enum {
+	scale12  =  0, // 	0 - 12 bit 
+	scale14  =  1, // 	1 - 14 bit >> 2
+	scale16  =  2, // 	2 - 16 bit >> 4
+	scale18  =  3, // 	3 - 18 bit >> 6
+	scale20  =  4, // 	4 - 20 bit >> 8
+	scale22  =  5, // 	5 - 22 bit >> 10
+	scale24  =  6, // 	6 - 24 bit >> 12
+	scale26  =  7, // 	7 - 26 bit >> 14
+	scale28  =  8, // 	8 - 28 bit >> 16
+	scale30  =  9, // 	9 - 30 bit >> 18
+	scale32  = 10, // 10 - 32 bit >> 20
+	scale34  = 11, // 11 - 34 bit >> 22
+	scale36  = 12  // 12 - 36 bit >> 24
+} ScaleBitTypeDef;
 
 typedef struct {
-	unsigned index:8;
-	int value:32;
+	ScaleBitTypeDef scale:4;
+	unsigned value:12;
 } Chennal_t;
 
 typedef struct {
@@ -62,7 +76,7 @@ void receiveMessage(uint8_t* Buf, uint32_t Len);
 * @brief  Sending channel data packets.
 * @retval Result of the operation: void
 */
-void sendDataFromChannels(void);
+void sendDataFromChannels(ChennalPacket_t *ch);
 
 
 #endif  // __serialPort_h

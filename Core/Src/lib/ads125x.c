@@ -43,7 +43,7 @@ SOFTWARE.
 #endif
 
 void delay(){
-	uint32_t counter = 2000;
+	uint32_t counter = 160;
 	while(--counter != 0);
 }
 //void ADS125x_EXTI_Callback(ADS125x_t *adc){
@@ -56,6 +56,10 @@ void delay(){
   */
 void ADS125x_DRDY_Wait(ADS125x_t *adc){
   while(HAL_GPIO_ReadPin(adc->drdyPort, adc->drdyPin) == GPIO_PIN_SET);
+}
+
+void ADS125x_DRDY_Wait_ReSet(ADS125x_t *adc){
+  while(HAL_GPIO_ReadPin(adc->drdyPort, adc->drdyPin) == GPIO_PIN_RESET);
 }
 
 /**
@@ -187,10 +191,14 @@ void ADS125x_Channel_Set(ADS125x_t *adc, int8_t channel){
   * @see    Datasheet p. 31 MUX : Input Multiplexer Control Register (Address 01h)
   */
 void ADS125x_ChannelDiff_Set(ADS125x_t *adc, int8_t p_chan, int8_t n_chan){
+	ADS125x_DRDY_Wait(adc);
 	ADS125x_CS(adc, 1);
   ADS125x_Register_Write(adc, ADS125x_REG_MUX, p_chan | n_chan);
+	ADS125x_CMD_Send(adc, ADS125x_CMD_SELFOCAL);
   ADS125x_CMD_Send(adc, ADS125x_CMD_SYNC);
   ADS125x_CMD_Send(adc, ADS125x_CMD_WAKEUP);
+	ADS125x_CMD_Send(adc, ADS125x_CMD_RDATAC);
+	delay();
 	ADS125x_CS(adc, 0);
 }
 
@@ -198,9 +206,9 @@ int32_t ADS125x_read_int32 (ADS125x_t *adc){
 	uint8_t spiRx[3] = {ADS125x_CMD_RDATA,0,0};
 	
 	ADS125x_CS(adc, 1);
-	HAL_SPI_Transmit(adc->hspix, spiRx, 1, 10);
-	delay();
-	HAL_SPI_Receive(adc->hspix, spiRx, 3, 10);
+	//HAL_SPI_Transmit(adc->hspix, spiRx, 1, 1);
+	//delay();
+	HAL_SPI_Receive(adc->hspix, spiRx, 3, 1);
 	ADS125x_CS(adc, 0);
 	
 	return (spiRx[0] << 16) | (spiRx[1] << 8) | (spiRx[2]);

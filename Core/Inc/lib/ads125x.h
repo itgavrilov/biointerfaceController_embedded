@@ -200,6 +200,7 @@ typedef struct {
 void			ADS125x_EXTI_Callback		(ADS125x_t *adc);
 void			ADS125x_CS 							(ADS125x_t *adc, uint8_t on);
 void			ADS125x_DRDY_Wait				(ADS125x_t *adc);
+void			ADS125x_DRDY_Wait_ReSet	(ADS125x_t *adc);
 void			ADS125x_Init						(ADS125x_t *adc, SPI_HandleTypeDef *hspi, uint8_t drate, uint8_t gain, uint8_t buffer_en);
 uint8_t		ADS125x_Register_Read		(ADS125x_t *adc, uint8_t reg, uint8_t* pData, uint8_t n);
 void			ADS125x_Register_Write	(ADS125x_t *adc, uint8_t reg, uint8_t data);
@@ -213,12 +214,11 @@ void			ADS125x_Continuous_Channel_Set(ADS125x_t *adc, int8_t channel);
 int32_t		ADS125x_read_int32						(ADS125x_t *adc);
 int32_t		ADS125x_Continuous_read_int32 (ADS125x_t *adc);
 
+void delay();
 
-// float    ADS125x_Read_Channel    (ADS125x_t *ads );
 uint8_t  ADS125x_Delay_Cycles    (ADS125x_t *adc, uint32_t cycles);
 uint32_t ADS125x_read_uint24     (ADS125x_t *adc);
 
-float    ADS125x_read_float32    (ADS125x_t *adc);
 
 #endif	/* ADS1255_H */
 

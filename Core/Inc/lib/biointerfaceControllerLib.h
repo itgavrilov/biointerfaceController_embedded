@@ -17,6 +17,8 @@ extern "C" {
 #include "main.h"
 #include "serialPort.h"
 
+#define FILTER_ORDER 100
+
 #define CONFIG_IN_FLASH (__IO ConfigPacket_t*)0x0800C000
 typedef struct {
 	unsigned sendChannelData:1;
@@ -30,7 +32,112 @@ typedef struct{
 
 void configWriteInFlash(void);
 void initController(void);
-void sendToSerialPort(void);
+
+// downsampling FIR (DDC) (333Hz)
+static const int16_t ddcFirNumerator[FILTER_ORDER] = { 
+				342,
+          203,
+          -84,
+         -217,
+          -73,
+          160,
+          176,
+         -106,
+         -429,
+         -426,
+           -9,
+          506,
+          678,
+          373,
+          -83,
+         -214,
+          126,
+          585,
+          647,
+          170,
+         -431,
+         -568,
+          -81,
+          559,
+          683,
+          106,
+         -633,
+         -774,
+         -107,
+          746,
+          898,
+          104,
+         -905,
+        -1076,
+         -109,
+         1121,
+         1327,
+          112,
+        -1456,
+        -1726,
+         -115,
+         2039,
+         2462,
+          119,
+        -3317,
+        -4290,
+         -124,
+         8414,
+        17040,
+        20690,
+        17040,
+         8414,
+         -124,
+        -4290,
+        -3317,
+          119,
+         2462,
+         2039,
+         -115,
+        -1726,
+        -1456,
+          112,
+         1327,
+         1121,
+         -109,
+        -1076,
+         -905,
+          104,
+          898,
+          746,
+         -107,
+         -774,
+         -633,
+          106,
+          683,
+          559,
+          -81,
+         -568,
+         -431,
+          170,
+          647,
+          585,
+          126,
+         -214,
+          -83,
+          373,
+          678,
+          506,
+           -9,
+         -426,
+         -429,
+         -106,
+          176,
+          160,
+          -73,
+         -217,
+          -84,
+          203,
+          342,
+          164
+};
+
+
 
 static const int8_t testSignalTable[5][256] = {
 	{
